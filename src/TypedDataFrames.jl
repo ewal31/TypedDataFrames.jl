@@ -42,7 +42,7 @@ macro withcols(func)
                 if type in [:DataFrame, :AbstractDataFrame]
 
                     # Extract columns from type (DataFrame[:a, :b] -> [:a, :b])
-                    requiredcols = [eval(c) for c in functionargument[2].args[2:end]]
+                    requiredcols = [c.value for c in functionargument[2].args[2:end]]
 
                     # Remove the array from the type (DataFrame[:a, :b] -> DataFrame)
                     functionargument[2] = type
@@ -59,7 +59,7 @@ macro withcols(func)
         end
     end
 
-    return Expr(:call, GlobalRef(Base, :eval), __module__, expr)
+    esc(Expr(:call, GlobalRef(Core, :eval), __module__, expr))
 end
 
 export @withcols

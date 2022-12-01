@@ -3,9 +3,7 @@ module TypedDataFrames
 using DataFrames
 
 macro withcols(func)
-    expr = Expr(:quote, func)
-
-    functiondefinition = expr.args[1].args[1].args
+    functiondefinition = func.args[1].args
 
     for i in 2:length(functiondefinition) # first is function name
 
@@ -49,7 +47,7 @@ macro withcols(func)
 
                     # Add an assertion check to the start of the function
                     df = functionargument[1]
-                    pushfirst!(expr.args[1].args[2].args, :(
+                    pushfirst!(func.args[2].args, :(
                         missingcols = setdiff($requiredcols, Symbol.(names($df)));
                         @assert isempty(missingcols) "Missing columns [" * join(missingcols, ", ") * ']';
                     ))
@@ -59,7 +57,7 @@ macro withcols(func)
         end
     end
 
-    esc(Expr(:call, GlobalRef(Core, :eval), __module__, expr))
+    esc(func)
 end
 
 export @withcols

@@ -23,4 +23,18 @@ sumfirst(DataFrame(a=[1,2], b=[3,4], c=[5,6])) # 4
 # When a column is missing, throws an AssertionError
 sumfirst(DataFrame(a=[1,2], c=[5,6]))
 # ERROR: AssertionError: Missing columns [b]
+
+# We can also specify types for the columns
+@withcols function firstnameandage(df::AbstractDataFrame[:name=>String, :age=>Int64])
+    return df[1, :name] * ':' * string(df[1, :age])
+end
+
+# When the types are right
+firstnameandage(DataFrame(name=["John"], age=[37]))
+
+# And when we make a mistake with the type
+firstnameandage(DataFrame(name=[3], age=[37]))
+# ERROR: AssertionError: Invalid Column Types [
+#  name:- expected String != got Int64
+# ]
 ```

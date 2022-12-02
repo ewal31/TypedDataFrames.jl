@@ -5,7 +5,7 @@ using DataFrames
 macro withcols(func)
     functiondefinition = func.args[1].args
 
-    for i in 2:length(functiondefinition) # first is function name
+    for i in length(functiondefinition):-1:2 # first is function name
 
         if hasproperty(functiondefinition[i], :args)
 
@@ -40,17 +40,39 @@ macro withcols(func)
                 if type in [:DataFrame, :AbstractDataFrame]
 
                     # Extract columns from type (DataFrame[:a, :b] -> [:a, :b])
-                    requiredcols = [c.value for c in functionargument[2].args[2:end]]
+                    requiredcols = [
+                        typeof(c) == Expr ? c.args[2].value : c.value
+                        for c in functionargument[2].args[2:end]
+                    ]
+
+                    requiredtypes = [
+                        (c.args[2].value, string(c.args[3]))
+                        for c in functionargument[2].args[2:end]
+                        if typeof(c) == Expr
+                    ]
+                    requiredtypecols = first.(requiredtypes)
 
                     # Remove the array from the type (DataFrame[:a, :b] -> DataFrame)
                     functionargument[2] = type
 
                     # Add an assertion check to the start of the function
                     df = functionargument[1]
-                    pushfirst!(func.args[2].args, :(
-                        missingcols = setdiff($requiredcols, Symbol.(names($df)));
-                        @assert isempty(missingcols) "Missing columns [" * join(missingcols, ", ") * ']';
-                    ))
+
+                    if !isempty(requiredtypecols)
+                        pushfirst!(func.args[2].args, quote
+                            invalidcolumntypes = [
+                                String(col) * ":- expected " * req * " != got " * is
+                                for ((col, req), is) in zip($requiredtypes, string.(eltype.(eachcol(df[!, $requiredtypecols]))))
+                                if req != is
+                            ]
+                            @assert isempty(invalidcolumntypes) "Invalid Column Types [\n " * join(invalidcolumntypes, ",\n ") * "\n]"
+                        end)
+                    end
+
+                    pushfirst!(func.args[2].args, quote
+                        missingcols = setdiff($requiredcols, Symbol.(names($df)))
+                        @assert isempty(missingcols) "Missing columns [" * join(missingcols, ", ") * ']'
+                    end)
 
                 end
             end

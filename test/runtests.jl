@@ -60,6 +60,56 @@ end
         DataFrame(a=[1, 2], c=[5, 6])
     )
 
+    # Empty DataFrame
+    @withcols function singleargumentempty(df::DataFrame[:a, :b])
+        return 2
+    end
+
+    @test singleargumentempty(
+        DataFrame(a=Vector(), b=Vector())
+    ) == 2
+
+end
+
+@testset "Single Argument (With Types)" begin
+
+    @withcols function singleargumenttyped(df::DataFrame[:a=>String, :b=>Float64, :c])
+        return df[1, :a] * "_" * string(df[1, :b])
+    end
+    
+    # Required Columns
+    @test singleargumenttyped(
+        DataFrame(a=["a", "b"], b=[3., 4.], c=[1, 2])
+    ) == "a_3.0"
+
+    # Extra Columns
+    @test singleargumenttyped(
+        DataFrame(a=["a", "b"], b=[3., 4.], c=[1, 2], d=[:a, :b])
+    ) == "a_3.0"
+
+    # Missing Column
+    @test_throws AssertionError singleargumenttyped(
+        DataFrame(a=["a", "b"], c=[5, 6])
+    )
+
+    # Wrong Type Column
+    @test_throws AssertionError singleargumenttyped(
+        DataFrame(a=[1, 2], b=[3., 4.], c=[1, 2])
+    )
+
+    # Empty DataFrame
+    @withcols function singleargumenttypedempty(df::DataFrame[:a=>String, :b=>Float64])
+        return 2
+    end
+
+    @test singleargumenttypedempty(
+        DataFrame(a=Vector{String}(), b=Vector{Float64}())
+    ) == 2
+
+    @test_throws AssertionError singleargumenttypedempty(
+        DataFrame(a=Vector{Int64}(), b=Vector{Float64}())
+    ) == 2
+
 end
 
 @testset "DataFrame but not columns" begin
@@ -310,6 +360,68 @@ end
     @test_throws AssertionError insemicolon2(
         3;
         df=DataFrame(a=[1, 2], c=[5, 6])
+    )
+
+end
+
+@testset "With Semicolon (With Types)" begin
+
+    @withcols function withsemicolontyped(
+            df::DataFrame[:a=>Float64, :b=>String];
+            a=3)
+        return df[1, :a]
+    end
+
+    @withcols function withsemicolon2typed(
+            a;
+            df::DataFrame[:a=>Float64, :b=>String]=DataFrame(a=[1., 0.], b=["a", "b"]))
+        return df[1, :a]
+    end
+    
+    # Required Columns
+    @test withsemicolontyped(
+        DataFrame(a=[1., 2.], b=["a", "b"])
+    ) == 1
+
+    @test withsemicolon2typed(3) == 1
+
+    # Extra Columns
+    @test withsemicolontyped(
+        DataFrame(a=[1., 2.], b=["a", "b"], c=[1, 2])
+    ) == 1
+
+    @test withsemicolon2typed(
+        3;
+        df=DataFrame(a=[1., 2.], b=["a", "b"], c=[5, 6])
+    ) == 1
+
+    # Missing Column
+    @test_throws AssertionError withsemicolontyped(
+        DataFrame(a=[1., 2.], c=[5, 6]);
+    )
+
+    @test_throws AssertionError withsemicolon2typed(
+        3;
+        df=DataFrame(a=[1., 2.], c=[5, 6])
+    )
+
+    # Wrong Type
+    @test_throws AssertionError withsemicolontyped(
+        DataFrame(a=[1., 2.], b=[1, 2]);
+    )
+
+    @test_throws AssertionError withsemicolontyped(
+        DataFrame(a=[1, 2], b=["a", "b"]);
+    )
+
+    @test_throws AssertionError withsemicolon2typed(
+        3;
+        df=DataFrame(a=[1., 2.], b=[1, 2])
+    )
+
+    @test_throws AssertionError withsemicolon2typed(
+        3;
+        df=DataFrame(a=[1, 2], b=["a", "b"])
     )
 
 end

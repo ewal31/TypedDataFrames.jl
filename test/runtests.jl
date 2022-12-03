@@ -2,6 +2,25 @@ using DataFrames
 using Test
 using TypedDataFrames
 
+module TestModule
+
+    using DataFrames
+    using TypedDataFrames
+
+    @withcols function testfunction(df:: DataFrame[:a, :b])
+        return nrow(df)
+    end
+
+end
+
+@testset "Import and use in another module (another eval context)" begin
+
+    using .TestModule
+
+    @test TestModule.testfunction(DataFrame(a=[1, 2], b=[3,4])) == 2
+
+end
+
 @testset "Single Argument (AbstractDataFrame)" begin
 
     @withcols function singleargumentabstract(df::AbstractDataFrame[:a, :b])

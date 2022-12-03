@@ -440,3 +440,21 @@ end
     @test_throws AssertionError singleline(DataFrame(b=[3,4]))
 
 end
+
+@testset "Function Variables of the same name" begin
+
+    @withcols function samenames(df::AbstractDataFrame[:a=>String, :b], missingcols, invalidcolumntypes)
+        return missingcols + invalidcolumntypes
+    end
+
+    # The added assertion code makes use of potentially two variables. This shouldn't
+    # overwrite variables added by the user.
+    @test samenames(DataFrame(a=["a", "b"], b=[1, 2]), 2, 5) == 7
+
+    # wrong type
+    @test_throws AssertionError samenames(DataFrame(a=[1, 2], b=[1, 2]), 2, 5)
+
+    # missing column
+    @test_throws AssertionError samenames(DataFrame(a=["a", "b"], c=[1, 2]), 2, 5)
+
+end

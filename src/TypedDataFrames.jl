@@ -59,19 +59,24 @@ macro withcols(func)
                     df = functionargument[1]
 
                     if !isempty(requiredtypecols)
+                        # Can probably change this to a splat...
                         pushfirst!(func.args[2].args, quote
-                            invalidcolumntypes = [
-                                String(col) * ":- expected " * req * " != got " * is
-                                for ((col, req), is) in zip($requiredtypes, string.(eltype.(eachcol(df[!, $requiredtypecols]))))
-                                if req != is
-                            ]
-                            @assert isempty(invalidcolumntypes) "Invalid Column Types [\n " * join(invalidcolumntypes, ",\n ") * "\n]"
+                            let
+                                local invalidcolumntypes = [
+                                    String(col) * ":- expected " * req * " != got " * is
+                                    for ((col, req), is) in zip($requiredtypes, string.(eltype.(eachcol(df[!, $requiredtypecols]))))
+                                    if req != is
+                                ]
+                                @assert isempty(invalidcolumntypes) "Invalid Column Types [\n " * join(invalidcolumntypes, ",\n ") * "\n]"
+                            end
                         end)
                     end
 
                     pushfirst!(func.args[2].args, quote
-                        missingcols = setdiff($requiredcols, Symbol.(names($df)))
-                        @assert isempty(missingcols) "Missing columns [" * join(missingcols, ", ") * ']'
+                        let
+                            local missingcols = setdiff($requiredcols, Symbol.(names($df)))
+                            @assert isempty(missingcols) "Missing columns [" * join(missingcols, ", ") * ']'
+                        end
                     end)
 
                 end

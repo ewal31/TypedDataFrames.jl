@@ -5,6 +5,11 @@ using DataFrames
 macro withcols(func)
     functiondefinition = func.args[1].args
 
+    # If has return type, first argument won't be a Symbol
+    if typeof(functiondefinition[1]) == Expr
+        functiondefinition = functiondefinition[1].args
+    end
+
     for i in length(functiondefinition):-1:2 # first is function name
 
         if hasproperty(functiondefinition[i], :args)

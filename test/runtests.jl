@@ -21,6 +21,8 @@ end
 
 end
 
+#TODO no args?
+
 @testset "Single Argument (AbstractDataFrame)" begin
 
     @withcols function singleargumentabstract(df::AbstractDataFrame[:a, :b])
@@ -30,13 +32,25 @@ end
     @withcols function singleargumentabstractdefault(df::AbstractDataFrame[:a, :b]=DataFrame(a=[1], b=[1]))
         return df[1, :a]
     end
-    
+
+    @withcols function singleargumentabstractwithreturn(df::AbstractDataFrame[:a, :b])::AbstractDataFrame
+        return df[!, [:a]]
+    end
+  
     # Required Columns
     @test singleargumentabstract(
         DataFrame(a=[1, 2], b=[3, 4])
     ) == 1
 
     @test singleargumentabstractdefault() == 1
+
+    @test singleargumentabstract(
+        DataFrame(a=[1, 2], b=[3, 4])
+    ) == 1
+
+    @test all(singleargumentabstractwithreturn(
+        DataFrame(a=[1, 2], b=[3, 4])
+    )[!, :a] .== [1, 2])
 
     # Extra Columns
     @test singleargumentabstract(
@@ -47,12 +61,20 @@ end
         DataFrame(a=[1, 2], b=[3, 4], c=[5, 6])
     ) == 1
 
+    @test all(singleargumentabstractwithreturn(
+        DataFrame(a=[1, 2], b=[3, 4], c=[5,6])
+    )[!, :a] .== [1, 2])
+
     # Missing Column
     @test_throws AssertionError singleargumentabstract(
         DataFrame(a=[1, 2], c=[5, 6])
     )
 
     @test_throws AssertionError singleargumentabstractdefault(
+        DataFrame(a=[1, 2], c=[5, 6])
+    )
+
+    @test_throws AssertionError singleargumentabstractwithreturn(
         DataFrame(a=[1, 2], c=[5, 6])
     )
 
